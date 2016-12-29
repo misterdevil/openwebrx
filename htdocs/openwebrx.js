@@ -399,8 +399,8 @@ function demodulator_default_analog(offset_frequency,subtype)
 	this.subtype=subtype;
 	this.filter={
 		min_passband: 100,
-		high_cut_limit: (audio_server_output_rate/2)-1, //audio_context.sampleRate/2,
-		low_cut_limit: (-audio_server_output_rate/2)+1 //-audio_context.sampleRate/2
+		high_cut_limit: (audio_server_output_rate)-1, //audio_context.sampleRate/2,
+		low_cut_limit: (-audio_server_output_rate)+1 //-audio_context.sampleRate/2
 	};
 	//Subtypes only define some filter parameters and the mod string sent to server,
 	//so you may set these parameters in your custom child class.
@@ -424,10 +424,10 @@ function demodulator_default_analog(offset_frequency,subtype)
 		this.high_cut=900;
 		this.server_mod="ssb";
 	}
-	else if(subtype=="nfm")
+	else if(subtype=="wfm")
 	{
-		this.low_cut=-4000;
-		this.high_cut=4000;
+		this.low_cut=-18000;
+		this.high_cut=18000;
 	}
 	else if(subtype=="am")
 	{
@@ -1091,14 +1091,14 @@ function resize_waterfall_container(check_init)
 }
 
 
-audio_server_output_rate=11025;
+audio_server_output_rate=48000;
 audio_client_resampling_factor=4;
 
 
 function audio_calculate_resampling(targetRate)
 { //both at the server and the client
-	output_range_max = 12000;
-	output_range_min = 8000;
+	output_range_max = 52000;
+	output_range_min = 42000;
 	i = 1;
 	while(true)
 	{
@@ -1295,7 +1295,7 @@ var audio_resampler;
 var audio_codec=new sdrjs.ImaAdpcm();
 var audio_compression="unknown";
 var audio_node;
-//var audio_received_sample_rate = 48000;
+var audio_received_sample_rate = 48000;
 var audio_input_buffer_size;
 
 // Optimalise these if audio lags or is choppy:
@@ -1548,11 +1548,11 @@ function audio_preinit()
 		return;
 	}
 
-	if(audio_context.sampleRate<44100*2)
+	if(audio_context.sampleRate<48000*2)
 		audio_buffer_size = 4096;
-	else if(audio_context.sampleRate>=44100*2 && audio_context.sampleRate<44100*4)
+	else if(audio_context.sampleRate>=48000*2 && audio_context.sampleRate<48000*4)
 		audio_buffer_size = 4096 * 2;
-	else if(audio_context.sampleRate>44100*4)
+	else if(audio_context.sampleRate>48000*4)
 		audio_buffer_size = 4096 * 4;
 
 	audio_rebuffer = new sdrjs.Rebuffer(audio_buffer_size,sdrjs.REBUFFER_FIXED);
