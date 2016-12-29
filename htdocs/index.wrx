@@ -84,11 +84,8 @@
 					<div id="webrx-mouse-freq">---.--- MHz</div>
 					<!--<div class="openwebrx-button" onclick="ws.send('SET mod=wfm');" >WFM</div>-->
 					<div class="openwebrx-panel-line">
-						<div class="openwebrx-button openwebrx-demodulator-button" onclick="demodulator_analog_replace('nfm');">FM</div>
-						<div class="openwebrx-button openwebrx-demodulator-button" onclick="demodulator_analog_replace('am');">AM</div>
-						<div class="openwebrx-button openwebrx-demodulator-button" onclick="demodulator_analog_replace('lsb');">LSB</div>
-						<div class="openwebrx-button openwebrx-demodulator-button" onclick="demodulator_analog_replace('usb');">USB</div>
-						<div class="openwebrx-button openwebrx-demodulator-button" onclick="demodulator_analog_replace('cw');">CW</div>
+						<div class="openwebrx-button openwebrx-demodulator-button" onclick="demodulator_analog_replace('wfm');">FM</div>
+						 
 					</div>
 					<div class="openwebrx-panel-line">
 						<div title="Mute on/off" id="openwebrx-mute-off" class="openwebrx-button" onclick="toggleMute();"><img src="gfx/openwebrx-speaker.png" class="openwebrx-sliderbtn-img" id="openwebrx-mute-img"></div>
