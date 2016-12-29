@@ -453,7 +453,7 @@ class WebRXHandler(BaseHTTPRequestHandler):
 					dsp.set_audio_compression(cfg.audio_compression)
 					dsp.set_format_conversion(cfg.format_conversion)
 					dsp.set_offset_freq(0)
-					dsp.set_bpf(-4000,4000)
+					dsp.set_bpf(-18000,18000)
 					dsp.nc_port=cfg.iq_server_port
 					apply_csdr_cfg_to_dsp(dsp)
 					myclient.dsp=dsp
