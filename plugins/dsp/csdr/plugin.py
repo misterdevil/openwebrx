@@ -4,6 +4,7 @@ OpenWebRX csdr plugin: do the signal processing with csdr
 	This file is part of OpenWebRX,
 	an open-source SDR receiver software with a web UI.
 	Copyright (c) 2013-2015 by Andras Retzler <randras@sdr.hu>
+	2016 by Dimas Pramudyanto add WFM support
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as
@@ -30,19 +31,19 @@ import fcntl
 class dsp_plugin:
 
 	def __init__(self):
-		self.samp_rate = 250000
-		self.output_rate = 11025 #this is default, and cannot be set at the moment
+		self.samp_rate = 2400000 #based on WFM csdr
+		self.output_rate = 48000 #based on csdr
 		self.fft_size = 1024
 		self.fft_fps = 5
 		self.offset_freq = 0
-		self.low_cut = -4000
-		self.high_cut = 4000
+		self.low_cut = -18000 #work
+		self.high_cut = 18000 #work
 		self.bpf_transition_bw = 320 #Hz, and this is a constant
-		self.ddc_transition_bw_rate = 0.15 # of the IF sample rate
+		self.ddc_transition_bw_rate = 0.05 # of the IF sample rate # based on WFM csdr
 		self.running = False
 		self.audio_compression = "none"
 		self.fft_compression = "none"
-		self.demodulator = "nfm"
+		self.demodulator = "wfm"
 		self.name = "csdr"
 		self.format_conversion = "csdr convert_u8_f"
 		self.base_bufsize = 512
@@ -54,14 +55,14 @@ class dsp_plugin:
 		self.fft_averages = 50
 
 	def chain(self,which):
-		any_chain_base="ncat -v 127.0.0.1 {nc_port} | "
-		if self.csdr_dynamic_bufsize: any_chain_base+="csdr setbuf {start_bufsize} | "
-		if self.csdr_through: any_chain_base+="csdr through | "
+		any_chain_base="ncat -v 127.0.0.1 {nc_port} | " #d
+		if self.csdr_dynamic_bufsize: any_chain_base+="csdr setbuf {start_bufsize} | " #d
+		if self.csdr_through: any_chain_base+="csdr through | " #d
 		any_chain_base+=self.format_conversion+(" | " if  self.format_conversion!="" else "") ##"csdr flowcontrol {flowcontrol} auto 1.5 10 | "
 		if which == "fft":
 			fft_chain_base = any_chain_base+"csdr fft_cc {fft_size} {fft_block_size} | " + \
 				("csdr logpower_cf -70 | " if self.fft_averages == 0 else "csdr logaveragepower_cf -70 {fft_size} {fft_averages} | ") + \
-				"csdr fft_exchange_sides_ff {fft_size}"
+				"csdr fft_exchange_sides_ff {fft_size}" #d
 			if self.fft_compression=="adpcm":
 				return fft_chain_base+" | csdr compress_fft_adpcm_f_u8 {fft_size}"
 			else:
@@ -70,54 +71,54 @@ class dsp_plugin:
 		chain_end = ""
 		if self.audio_compression=="adpcm":
 			chain_end = " | csdr encode_ima_adpcm_i16_u8"
-		if which == "nfm": return chain_begin + "csdr fmdemod_quadri_cf | csdr limit_ff | csdr fractional_decimator_ff {last_decimation} | csdr deemphasis_nfm_ff 11025 | csdr fastagc_ff 1024 | csdr convert_f_s16"+chain_end
-		elif which == "am":	return chain_begin + "csdr amdemod_cf | csdr fastdcblock_ff | csdr fractional_decimator_ff {last_decimation} | csdr agc_ff | csdr limit_ff | csdr convert_f_s16"+chain_end
+		if which == "wfm": return chain_begin + "csdr fmdemod_quadri_cf | csdr fractional_decimator_ff {last_decimation} | csdr deemphasis_wfm_ff 48000 50e-6 | csdr convert_f_s16"+chain_end #based on WFM csdr, not sure about shift_addition shift pipe part
+		elif which == "am":	return chain_begin + "csdr amdemod_cf | csdr fastdcblock_ff | csdr fractional_decimator_ff {last_decimation} | csdr agc_ ff | csdr limit_ff | csdr convert_f_s16"+chain_end
 		elif which == "ssb": return chain_begin + "csdr realpart_cf | csdr fractional_decimator_ff {last_decimation} | csdr agc_ff | csdr limit_ff | csdr convert_f_s16"+chain_end
 
-	def set_audio_compression(self,what):
+	def set_audio_compression(self,what): #d
 		self.audio_compression = what
 
-	def set_fft_compression(self,what):
+	def set_fft_compression(self,what): #d
 		self.fft_compression = what
 
 	def get_fft_bytes_to_read(self):
 		if self.fft_compression=="none": return self.fft_size*4
-		if self.fft_compression=="adpcm": return (self.fft_size/2)+(10/2)
+		if self.fft_compression=="adpcm": return (self.fft_size/2)+(10/2) #d
 
 	def set_samp_rate(self,samp_rate):
 		#to change this, restart is required
 		self.samp_rate=samp_rate
-		self.decimation=1
+		self.decimation= 1 #based on csdr wfm divided by 10
 		while self.samp_rate/(self.decimation+1)>self.output_rate:
-			self.decimation+=1
-		self.last_decimation=float(self.if_samp_rate())/self.output_rate
+			self.decimation+= 1
+		self.last_decimation=float(self.if_samp_rate())/self.output_rate #based on csdr wfm 5
 
 	def if_samp_rate(self):
-		return self.samp_rate/self.decimation
+		return self.samp_rate/self.decimation #240k
 
 	def get_name(self):
 		return self.name
 
 	def get_output_rate(self):
-		return self.output_rate
+		return self.output_rate #48k 
 
 	def set_output_rate(self,output_rate):
 		self.output_rate=output_rate
-		self.set_samp_rate(self.samp_rate) #as it depends on output_rate
+		self.set_samp_rate(self.samp_rate) #as it depends on output_rate #d
 
 	def set_demodulator(self,demodulator):
 		#to change this, restart is required
-		self.demodulator=demodulator
+		self.demodulator=demodulator #wfm default
 
 	def get_demodulator(self):
-		return self.demodulator
+		return self.demodulator #d
 
 	def set_fft_size(self,fft_size):
-		#to change this, restart is required
+		#to change this, restart is required #d
 		self.fft_size=fft_size
 
 	def set_fft_fps(self,fft_fps):
-		#to change this, restart is required
+		#to change this, restart is required #d
 		self.fft_fps=fft_fps
 
 	def set_fft_averages(self,fft_averages):
@@ -125,48 +126,48 @@ class dsp_plugin:
 		self.fft_averages=fft_averages
 
 	def fft_block_size(self):
-		if self.fft_averages == 0: return self.samp_rate/self.fft_fps
-		else: return self.samp_rate/self.fft_fps/self.fft_averages
+		if self.fft_averages == 0: return self.samp_rate/self.fft_fps 
+		else: return self.samp_rate/self.fft_fps/self.fft_averages #9.6k
 
 	def set_format_conversion(self,format_conversion):
-		self.format_conversion=format_conversion
+		self.format_conversion=format_conversion #d
 
 	def set_offset_freq(self,offset_freq):
 		self.offset_freq=offset_freq
 		if self.running:
-			self.shift_pipe_file.write("%g\n"%(-float(self.offset_freq)/self.samp_rate))
+			self.shift_pipe_file.write("%g\n"%(-float(self.offset_freq)/self.samp_rate)) 
 			self.shift_pipe_file.flush()
 
 	def set_bpf(self,low_cut,high_cut):
-		self.low_cut=low_cut
-		self.high_cut=high_cut
+		self.low_cut=low_cut #-40k
+		self.high_cut=high_cut #40k
 		if self.running:
 			self.bpf_pipe_file.write( "%g %g\n"%(float(self.low_cut)/self.if_samp_rate(), float(self.high_cut)/self.if_samp_rate()) )
 			self.bpf_pipe_file.flush()
-
+    #d
 	def get_bpf(self):
 		return [self.low_cut, self.high_cut]
-
+	#d
 	def set_squelch_level(self, squelch_level):
 		self.squelch_level=squelch_level
 		if self.running:
 			self.squelch_pipe_file.write( "%g\n"%(float(self.squelch_level)) )
 			self.squelch_pipe_file.flush()
-
+	#d
 	def get_smeter_level(self):
 		if self.running:
 			line=self.smeter_pipe_file.readline()
 			return float(line[:-1])
-
+	#d
 	def mkfifo(self,path):
 		try:
 			os.unlink(path)
 		except:
 			pass
 		os.mkfifo(path)
-
+	#d
 	def ddc_transition_bw(self):
-		return self.ddc_transition_bw_rate*(self.if_samp_rate()/float(self.samp_rate))
+		return self.ddc_transition_bw_rate*(self.if_samp_rate()/float(self.samp_rate)) #0.005 #not sure
 
 	def start(self):
 		command_base=self.chain(self.demodulator)
@@ -187,13 +188,13 @@ class dsp_plugin:
 			self.smeter_pipe=pipe_base_path+"smeter"
 			self.mkfifo(self.smeter_pipe)
 
-		#run the command
+		#run the command #d
 		command=command_base.format( bpf_pipe=self.bpf_pipe, shift_pipe=self.shift_pipe, decimation=self.decimation, \
 			last_decimation=self.last_decimation, fft_size=self.fft_size, fft_block_size=self.fft_block_size(), fft_averages=self.fft_averages, \
 			bpf_transition_bw=float(self.bpf_transition_bw)/self.if_samp_rate(), ddc_transition_bw=self.ddc_transition_bw(), \
 			flowcontrol=int(self.samp_rate*2), start_bufsize=self.base_bufsize*self.decimation, nc_port=self.nc_port, \
 			squelch_pipe=self.squelch_pipe, smeter_pipe=self.smeter_pipe )
-
+		
 		print "[openwebrx-dsp-plugin:csdr] Command =",command
 		#code.interact(local=locals())
 		my_env=os.environ.copy()
