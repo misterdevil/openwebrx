@@ -38,7 +38,9 @@ It has the following features:
 
 ## Setup
 
-OpenWebRX currently requires Linux and python 2.7 to run. 
+OpenWebRX currently requires Linux and python 2.7 to run.
+
+
 
 First you will need to install the dependencies:
 
@@ -64,6 +66,46 @@ Now the next step is to customize the parameters of your server in `config_webrx
 
 Actually, if you do something cool with OpenWebRX (or just have a problem), please drop me a mail:  
 *Andras Retzler, HA7ILM &lt;randras@sdr.hu&gt;*
+
+#Installation Guide :
+#Install dependencies
+sudo apt-get install build-essential git libfftw3-dev cmake libusb-1.0-0-dev nmap 
+#nmap itself is not used by OpenWebRX at all, but we need to install it because the ncat tool is packaged with it.
+#ncat is a netcat alternative which is used by OpenWebRX for internally distributing I/Q data, 
+#  and also solves the incompatibility problems among netcat versions.
+
+#Fetch and build rtl-sdr, skip if already done (subdirectories will be created under the current directory).
+git clone git://git.osmocom.org/rtl-sdr.git
+cd rtl-sdr/
+mkdir build
+cd build
+cmake ../ -DINSTALL_UDEV_RULES=ON
+make
+sudo make install
+sudo ldconfig
+cd ../..
+
+#Disable the DVB-T driver, which would prevent the rtl_sdr tool from accessing the stick
+#(if you want to use it for DVB-T reception later, you should undo this change):
+sudo bash -c 'echo -e "\n# for RTL-SDR:\nblacklist dvb_usb_rtl28xxu\n" >> /etc/modprobe.d/blacklist.conf'
+sudo rmmod dvb_usb_rtl28xxu # disable that kernel module for the current session
+
+#Download OpenWebRX and libcsdr (subdirectories will be created under the current directory).
+git clone https://github.com/misterdevil/openwebrx.git
+git clone https://github.com/simonyiszk/csdr.git
+
+#Compile libcsdr (which is a dependency of OpenWebRX)
+cd csdr
+make
+sudo make install
+
+#Edit OpenWebRX config or leave defaults
+nano ../openwebrx/config_webrx.py 
+
+#Run OpenWebRX
+cd ../openwebrx
+./openwebrx.py
+
 
 ## Usage tips
 
