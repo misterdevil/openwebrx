@@ -36,8 +36,8 @@ class dsp_plugin:
 		self.fft_size = 1024
 		self.fft_fps = 5
 		self.offset_freq = 0
-		self.low_cut = -80000 #work
-		self.high_cut = 80000 #work best 20000/18000 . 50000 good but invalid
+		self.low_cut = -75000 #work
+		self.high_cut = 75000 #work best 60000-100000
 		self.bpf_transition_bw = 100000 #Hz, and this is a constant , 320 default
 		self.ddc_transition_bw_rate = 1.5 # of the IF sample rate # based on WFM csdr / diatas 2 kualitas jelek, diatas 6 tidak bekerja, ideal 0.05-1.5
 		self.running = False
@@ -89,7 +89,7 @@ class dsp_plugin:
 	def set_samp_rate(self,samp_rate):
 		#to change this, restart is required
 		self.samp_rate=samp_rate
-		self.decimation= 1 #based on csdr wfm divided by 10
+		self.decimation= 2 #based on csdr wfm divided by 10
 		while self.samp_rate/(self.decimation+1)>self.output_rate:
 			self.decimation+= 1 # diganti lainya tidak berjalan
 		self.last_decimation=float(self.if_samp_rate())/self.output_rate #based on csdr wfm 5
