@@ -29,6 +29,8 @@ config_webrx: configuration options for OpenWebRX
 	(It means that you do not have to redistribute config_rtl.py and
 	config_webrx.py if you make any changes to these two configuration files,
 	and use them for running your web service with OpenWebRX.)
+
+	2016 by Dimas Pramudyanto modification for WFM receiver
 """
 
 # NOTE: you can find additional information about configuring OpenWebRX in the Wiki:
@@ -36,9 +38,9 @@ config_webrx: configuration options for OpenWebRX
 
 # ==== Server settings ====
 web_port=8078
-server_hostname="localhost"
+server_hostname="180.245.162.75"
  # If this contains an incorrect value, the web UI may freeze on load (it can't open websocket)
-max_clients=5
+max_clients=3
 
 # ==== Web GUI configuration ====
 receiver_name="Mister Digital"
@@ -51,13 +53,8 @@ receiver_admin="dimaspramudyanto94@gmail.com"
 receiver_gps=(47.000000,19.000000)
 photo_height=350
 photo_title=""
-photo_desc="""
-You can add your own background photo and receiver information.<br />
-Receiver is operated by: <a href="mailto:%[RX_ADMIN]">%[RX_ADMIN]</a><br/>
-Device: %[RX_DEVICE]<br />
-Antenna: %[RX_ANT]<br />
-Website: <a href="http://localhost" target="_blank">http://localhost</a>
-"""
+photo_desc=""
+
 
 # ==== sdr.hu listing ====
 # If you want your ham receiver to be listed publicly on sdr.hu, then take the following steps:
@@ -70,11 +67,11 @@ sdrhu_public_listing = False
 # ==== DSP/RX settings ====
 dsp_plugin="csdr"
 fft_fps=5
-fft_size=8192
+fft_size=516
 fft_voverlap_factor=0.3 #If it is above 0, multiple FFTs will be used for creating a line on the diagram.
 samp_rate = 2400000 #default tidak bisa diganti saat ini 
-center_freq = 89700000
-rf_gain = 40 #in dB. For an RTL-SDR, rf_gain=0 will set the tuner to auto gain mode, else it will be in manual gain mode.
+center_freq = 88900000
+rf_gain = 0 #in dB. For an RTL-SDR, rf_gain=0 will set the tuner to auto gain mode, else it will be in manual gain mode.
 ppm = 0
 
 audio_compression="adpcm" #valid values: "adpcm", "none"
@@ -88,7 +85,7 @@ format_conversion="csdr convert_u8_f"
 
 shown_center_freq = center_freq #you can change this if you use an upconverter
 
-client_audio_buffer_size = 7
+client_audio_buffer_size = 10
 #increasing client_audio_buffer_size will:
 # - also increase the latency
 # - decrease the chance of audio underruns
