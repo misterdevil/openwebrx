@@ -401,7 +401,7 @@ function demodulator_default_analog(offset_frequency,subtype)
 	this.filter={
 		min_passband: 100,
 		high_cut_limit: (audio_server_output_rate)-1, //audio_context.sampleRate/2,
-		low_cut_limit: (-audio_server_output_rate)+1 //-audio_context.sampleRate/2
+		low_cut_limit: (audio_server_output_rate)+1 //-audio_context.sampleRate/2
 	};
 	//Subtypes only define some filter parameters and the mod string sent to server,
 	//so you may set these parameters in your custom child class.
@@ -415,8 +415,8 @@ function demodulator_default_analog(offset_frequency,subtype)
 	}
 	else if(subtype=="wfm")
 	{
-		this.low_cut=-80000;
-		this.high_cut=80000;
+		this.low_cut=-75000;
+		this.high_cut=75000;
 	}
 
 
@@ -1223,14 +1223,14 @@ function setfreqif_fut(str)
 
 
 
-audio_server_output_rate=48000;
+audio_server_output_rate=44100;
 audio_client_resampling_factor=4;
 
 
 function audio_calculate_resampling(targetRate)
 { //both at the server and the client
-	output_range_max = 52000;
-	output_range_min = 42000;
+	output_range_max = 80000;
+	output_range_min = 32000;
 	i = 1;
 	while(true)
 	{
@@ -1427,7 +1427,7 @@ var audio_resampler;
 var audio_codec=new sdrjs.ImaAdpcm();
 var audio_compression="unknown";
 var audio_node;
-var audio_received_sample_rate = 48000;
+var audio_received_sample_rate = 44100;
 var audio_input_buffer_size;
 
 // Optimalise these if audio lags or is choppy:
