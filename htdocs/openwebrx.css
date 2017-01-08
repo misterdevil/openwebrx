@@ -26,6 +26,9 @@ html, body
 	height: 100%;
 	font-family: "DejaVu Sans", Verdana, Geneva, sans-serif;
 	overflow: hidden;
+	background : #1f253d ;
+	background-size: 100% 100%;
+    background-repeat: no-repeat;
 }
 
 input
@@ -366,26 +369,26 @@ input[type=range]:focus::-ms-fill-upper
 #openwebrx-scale-container
 {
 	height: 47px;
-	background-image: url("gfx/openwebrx-scale-background.png");
 	background-repeat: repeat-x;
 	overflow: hidden;
 	z-index:1000;
 	position: relative;
+	top: 100px;
 }
 
 #webrx-canvas-container
 {
 	/*background-image:url('gfx/openwebrx-blank-background-1.jpg');*/
 	position: relative;
-	height: 2000px;
-	overflow-y: scroll;
+	height: 300px;
+	
+
+	/*overflow-y: scroll;*/
 	overflow-x: hidden;
 	/*background-color: #646464;*/
 	/*background-image: -webkit-linear-gradient(top, rgba(247,247,247,1) 0%, rgba(0,0,0,1) 100%);*/
-	background-image: url('gfx/openwebrx-background-cool-blue.png');
 	background-repeat: no-repeat;
-	background-color: #1e5f7f;
-	cursor: crosshair;
+		cursor: crosshair;
 }
 
 #webrx-canvas-container canvas
@@ -477,8 +480,9 @@ input[type=range]:focus::-ms-fill-upper
 #webrx-actual-freq
 {
 	width: 100%;
-	text-align: left;
+	text-align: center;
 	font-size: 16pt;
+	color: white;
 	font-family: 'expletus-sans-medium';
 	padding: 0;
 	margin: 0;
@@ -489,7 +493,7 @@ input[type=range]:focus::-ms-fill-upper
 #webrx-mouse-freq
 {
 	width: 100%;
-	text-align: left;
+	text-align: center;
 	font-size: 10pt;
 	color: #AAA;
 	font-family: 'expletus-sans-medium';
@@ -659,19 +663,23 @@ img.openwebrx-mirror-img
 
 #openwebrx-panel-status
 {
-	margin: 0px;
+	margin: auto;
 	padding: 0px;
 	background-color:rgba(0, 0, 0, 0);
+	
 }
 
 #openwebrx-panel-status div.openwebrx-progressbar
 {
-	width: 200px;
-	height: 20px;
+	width: 250px;
+	height: 30px;
+	left: 20px;
+	
 }
 
 #openwebrx-main-buttons img
 {
+	margin: auto;
 }
 
 #openwebrx-main-buttons ul
@@ -703,7 +711,7 @@ img.openwebrx-mirror-img
 #openwebrx-main-buttons
 {
 	position: absolute;
-	right: 133px;
+	left: 30px;
 	top: 3px;
 	margin:0;
 	color: white;
@@ -716,6 +724,7 @@ img.openwebrx-mirror-img
 #openwebrx-panel-receiver
 {
 	width:110px;
+	left: 100px;
 }
 
 #openwebrx-mute-on
@@ -732,7 +741,7 @@ img.openwebrx-mirror-img
 {
 	position: relative;
 	top: -2px;
-	width:91px;
+	width:250px;
 }
 
 .openwebrx-sliderbtn-img
@@ -805,4 +814,130 @@ img.openwebrx-mirror-img
 #openwebrx-big-grey img
 {
 	width: 150px;
+}
+
+#id-params-1
+{
+	font-size: 10pt;
+	/*font-family: 'expletus-sans-medium';*/
+	padding: 0;
+	margin: 0;
+	margin-bottom: 5px;		/* vspace */
+	/*line-height:22px;*/
+	/*background-color: purple;		debug */
+}
+
+#id-params-1 .class-td
+{
+	/*background-color: cyan;		/* debug */
+	/*border: 1px solid red;		/* debug */
+}
+
+#id-freq-cell
+{
+	width: 20%;
+}
+
+#id-link-cell
+{
+	width: 15%;
+}
+
+#id-link-cell a
+{
+	color: lime;
+}
+
+#id-freq-form
+{
+	/*position: absolute;
+	top: 0;
+	left: 0;*/
+	font-size: 10pt;
+	text-align: left;
+	/*border: 1px solid lime;	/* debug */
+}
+
+#select-band-cell
+{
+	width: 35%;
+}
+
+#select-band
+{
+	/*position: absolute;
+	top: 0;
+	left: 15%;*/
+	width: 90%;
+	font-size: 9pt;
+	color: red;
+	text-align: center;
+	/*border: 1px solid lime;	/* debug */
+}
+
+#id-iOS-container
+{
+	display: none;
+	position: fixed;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	opacity: 0.8;
+	background-color: #777;
+	left: 0;
+	top: 0;
+	vertical-align: middle;
+	text-align: center;
+	color: white;
+	font-weight: bold;
+	font-size: 20pt;
+	transition: opacity 0.3s linear;
+	cursor: pointer;
+	z-index: 1001;
+}
+.class-table
+{
+	display: table;
+	width: 100%;		/* otherwise buttons get squished together */
+	/*border-spacing: 1px;	debug*/
+}
+
+/*
+	To get a table cell with a centered, fixed-width text field (button) you have to
+	be aware of two issues. For the cell to be centered the element following the
+	display:table-cell must not be a div. But a span cannot specify a width unless
+	it has display:inline-block. I hate CSS..
+*/
+
+.class-td
+{
+	display: table-cell;
+	position: relative;		/* so position:absolute can be used inside cells */
+	text-align: center;
+	/*background-color: cyan;	/* debug */
+	/*border: 1px solid red;	/* debug */
+}
+
+.class-td span
+{
+	display: inline-block;
+}
+
+/* removed non-free fonts like that: */
+/*@font-face
+{
+    font-family: 'unibody_8_pro_regregular';
+    src: url('gfx/unibody8pro-regular-webfont.eot');
+    src: url('gfx/unibody8pro-regular-webfont.ttf');
+    font-weight: normal;
+    font-style: normal;
+}*/
+
+@font-face
+{
+    font-family: 'expletus-sans-medium';
+    src: url('gfx/font-expletus-sans/ExpletusSans-Medium.ttf');
+    font-weight: normal;
+    font-style: normal;
 }

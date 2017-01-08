@@ -51,6 +51,7 @@ var audio_compression="none";
 var waterfall_setup_done=0;
 var waterfall_queue = [];
 var waterfall_timer;
+var setfreqif_fut_timer;
 
 /*function fade(something,from,to,time_ms,fps)
 {
@@ -75,13 +76,13 @@ function e(what) { return document.getElementById(what); }
 ios = /iPad|iPod|iPhone/.test(navigator.userAgent);
 //alert("ios="+ios.toString()+"  "+navigator.userAgent);
 
-function init_rx_photo()
-{
-	e("webrx-top-photo-clip").style.maxHeight=rx_photo_height.toString()+"px";
-	window.setTimeout(function() { animate(e("webrx-rx-photo-title"),"opacity","",1,0,1,500,30); },1000);
-	window.setTimeout(function() { animate(e("webrx-rx-photo-desc"),"opacity","",1,0,1,500,30); },1500);
-	window.setTimeout(function() { close_rx_photo() },2500);
-}
+// function init_rx_photo()
+// {
+// 	e("webrx-top-photo-clip").style.maxHeight=rx_photo_height.toString()+"px";
+// 	window.setTimeout(function() { animate(e("webrx-rx-photo-title"),"opacity","",1,0,1,500,30); },1000);
+// 	window.setTimeout(function() { animate(e("webrx-rx-photo-desc"),"opacity","",1,0,1,500,30); },1500);
+// 	window.setTimeout(function() { close_rx_photo() },2500);
+// }
 
 dont_toggle_rx_photo_flag=0;
 
@@ -412,28 +413,12 @@ function demodulator_default_analog(offset_frequency,subtype)
 		this.high_cut=-300;
 		this.server_mod="ssb";
 	}
-	else if(subtype=="usb")
-	{
-		this.low_cut=300;
-		this.high_cut=3000;
-		this.server_mod="ssb";
-	}
-	else if(subtype=="cw")
-	{
-		this.low_cut=700;
-		this.high_cut=900;
-		this.server_mod="ssb";
-	}
 	else if(subtype=="wfm")
 	{
-		this.low_cut=-18000;
-		this.high_cut=18000;
+		this.low_cut=-80000;
+		this.high_cut=80000;
 	}
-	else if(subtype=="am")
-	{
-		this.low_cut=-4000;
-		this.high_cut=4000;
-	}
+
 
 	this.wait_for_timer=false;
 	this.set_after=false;
@@ -596,6 +581,80 @@ function demodulator_set_offset_frequency(which,to_what)
 	demodulators[0].offset_frequency=Math.round(to_what);
 	demodulators[0].set();
 	mkenvelopes(get_visible_freq_range());
+}
+
+//----------------------------------------------------------------------------------------
+// recording
+
+var rec_showtimer;
+var rec_downloadurl;
+var rec_fname='';
+
+function record_show()
+{
+   document.getElementById('reccontrol').innerHTML=Math.round(audio_output_value.rec_length_kB())+" kB";
+}
+
+function record_start() { 
+   document.getElementById('reccontrol').innerHTML=0+" kB";
+   if (rec_downloadurl) { URL.revokeObjectURL(rec_downloadurl); rec_downloadurl=null; }
+   rec_showtimer=setInterval('record_show()',250);
+   audio_output_value.rec_start(); 
+
+   try {
+      rec_fname=(new Date().toISOString()).replace(/\.[0-9]{3}/,"");
+   } catch (e) {};
+   rec_fname="websdr_recording_start_"+rec_fname+"_"+nominalfreq().toFixed(1)+"kHz.wav";
+}
+
+function record_stop()
+{
+   clearInterval(rec_showtimer);
+   var res = audio_output_value.rec_finish();
+
+   var wavhead = new ArrayBuffer(44);
+   var dv=new DataView(wavhead);
+   var i=0;
+   var sr=Math.round(res.sr);
+   dv.setUint8(i++,82);  dv.setUint8(i++,73); dv.setUint8(i++,70); dv.setUint8(i++,70); // RIFF  (is there really no less verbose way to initialize this thing?)
+   dv.setUint32(i,res.len+44,true); i+=4;  // total length; WAV files are little-endian
+   dv.setUint8(i++,87);  dv.setUint8(i++,65); dv.setUint8(i++,86); dv.setUint8(i++,69); // WAVE
+   dv.setUint8(i++,102);  dv.setUint8(i++,109); dv.setUint8(i++,116); dv.setUint8(i++,32); // fmt
+     dv.setUint32(i,16,true);   i+=4;   // length of fmt
+     dv.setUint16(i,1,true);    i+=2;   // PCM
+     dv.setUint16(i,1,true);    i+=2;   // mono
+     dv.setUint32(i,sr,true);   i+=4;   // samplerate
+     dv.setUint32(i,2*sr,true); i+=4;   // 2*samplerate
+     dv.setUint16(i,2,true);    i+=2;   // bytes per sample
+     dv.setUint16(i,16,true);   i+=2;   // bits per sample
+   dv.setUint8(i++,100);  dv.setUint8(i++,97); dv.setUint8(i++,116); dv.setUint8(i++,97); // data
+     dv.setUint32(i,res.len,true);  // length of data
+
+   var wavdata = res.wavdata;
+   wavdata.unshift(wavhead);
+
+   var mimetype = 'application/binary';
+   var bb = new Blob(wavdata, {type: mimetype});
+   if (!bb) document.getElementById('recwarning').style.display="block";
+   if (window.navigator.msSaveOrOpenBlob) {
+      // workaround for bug in MSEdge: https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/7260192/
+      window.navigator.msSaveOrOpenBlob(bb, rec_fname);
+   } else {
+      rec_downloadurl = window.URL.createObjectURL(bb);
+      document.getElementById('reccontrol').innerHTML="<a href='"+rec_downloadurl+"' download='"+rec_fname+"'>download</a>";
+   }
+}
+
+function record_click()
+{
+   var bt=document.getElementById('recbutton');
+   if (bt.innerHTML=="stop") {
+      bt.innerHTML="start";
+      record_stop();
+   } else {
+      bt.innerHTML="stop";
+      record_start();
+   }
 }
 
 
@@ -867,7 +926,7 @@ function mkscale()
 
 function resize_scale()
 {
-	scale_ctx.canvas.width  = window.innerWidth;
+	scale_ctx.canvas.width  = innerWidth;
 	scale_ctx.canvas.height = 47;
 	mkscale();
 }
@@ -1089,6 +1148,79 @@ function resize_waterfall_container(check_init)
 	if(check_init&&!waterfall_setup_done) return;
 	canvas_container.style.height=(window.innerHeight-e("webrx-top-container").clientHeight-e("openwebrx-scale-container").clientHeight).toString()+"px";
 }
+
+
+// =======================  >PANELS  ======================
+// ========================================================
+
+var panel_margin = 10;
+
+// called from waterfall_init()
+function panels_setup()
+{
+	var td = function(inner, _id) {
+		var id = (typeof _id != "undefined")? 'id="'+ _id +'"' : '';
+		var td = '<span '+ id +' class="class-td">'+ inner +'</span>';
+		return td;
+	}
+
+	// id-client-params
+	
+	html("id-ident").innerHTML =
+		'<form name="form_ident" action="#" onsubmit="ident_complete(); return false;">' +
+			'Your name or callsign: <input id="input-ident" type="text" size=32 onkeyup="ident_keyup(this, event);">' +
+		'</form>';
+	
+	html("id-params-1").innerHTML =
+		td('<form id="id-freq-form" name="form_freq" action="#" onsubmit="freqset_complete(0); return false;">' +
+			'<input id="id-freq-input" type="text" size=8 onkeyup="freqset_keyup(this, event);">' +
+			'</form>', 'id-freq-cell') +
+
+		td('<span id="id-freq-link">kHz</span>', 'id-link-cell') +
+
+		td('<select id="select-band" onchange="select_band(this.value)">' +
+				'<option value="0" selected disabled>select band</option>' +
+				setup_band_menu() +
+			'</select>', 'select-band-cell') +
+
+		td('<select id="select-ext" onchange="freqset_select(); extint_select(this.value)">' +
+				'<option value="-1" selected disabled>extension</option>' +
+				extint_select_menu() +
+			'</select>', 'select-ext-cell');
+
+}
+
+function setfreq(f)
+{
+   try { clearTimeout(setfreqif_fut_timer); } catch (e) {} ;
+   freq=f;
+   document.getElementById("dummyforie").style.display = 'none'; document.getElementById("dummyforie").style.display = 'block';  // utter nonsense, but forces IE8 to update the screen :(
+   send_soundsettings_to_server();
+   if (view!=Views.blind) draw_passband();
+   if (dont_update_textual_frequency) return;
+   var nomfreq=nominalfreq();
+   if (freq.toFixed) document.freqform.frequency.value=nomfreq.toFixed(2);
+   else document.freqform.frequency.value=nomfreq+" kHz";
+}
+function setfreqif(str)
+// called when frequency is entered textually
+{
+   f=parseFloat(str);
+   if (!(f>0)) return;
+   dont_update_textual_frequency=true;
+   setfreqb(f);
+   dont_update_textual_frequency=false;
+   document.freqform.frequency.value=str;
+}
+
+function setfreqif_fut(str)
+// called when typing in the frequency field; schedules a frequency update in the future, in case no more key presses follow soon
+{
+   try { clearTimeout(setfreqif_fut_timer); } catch (e) {} ;
+   setfreqif_fut_timer = setTimeout('setfreqif('+str+')',1000);
+}
+
+
 
 
 audio_server_output_rate=48000;
@@ -1907,7 +2039,6 @@ function openwebrx_init()
 {
 	if(ios) e("openwebrx-big-grey").style.display="table-cell";
 	(opb=e("openwebrx-play-button-text")).style.marginTop=(window.innerHeight/2-opb.clientHeight/2).toString()+"px";
-	init_rx_photo();
 	open_websocket();
 	place_panels(first_show_panel);
 	window.setTimeout(function(){window.setInterval(debug_audio,1000);},1000);
