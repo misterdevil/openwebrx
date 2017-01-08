@@ -73,7 +73,7 @@ fft_fps=5
 fft_size=8192
 fft_voverlap_factor=0.3 #If it is above 0, multiple FFTs will be used for creating a line on the diagram.
 samp_rate = 2400000 #default tidak bisa diganti saat ini 
-center_freq = 87700000
+center_freq = 89700000
 rf_gain = 40 #in dB. For an RTL-SDR, rf_gain=0 will set the tuner to auto gain mode, else it will be in manual gain mode.
 ppm = 0
 
@@ -88,7 +88,7 @@ format_conversion="csdr convert_u8_f"
 
 shown_center_freq = center_freq #you can change this if you use an upconverter
 
-client_audio_buffer_size = 5
+client_audio_buffer_size = 7
 #increasing client_audio_buffer_size will:
 # - also increase the latency
 # - decrease the chance of audio underruns
@@ -105,7 +105,7 @@ iq_server_port = 4951 #TCP port for ncat to listen on. It will send I/Q data ove
 #A guide is available to help you set these values: https://github.com/simonyiszk/openwebrx/wiki/Calibrating-waterfall-display-levels
 
 ### default theme by teejez:
-waterfall_colors = "[0x000000ff,0x0000ffff,0x00ffffff,0x00ff00ff,0xffff00ff,0xff0000ff,0xff00ffff,0xffffffff]"
+waterfall_colors = "[0x00FFFFFF,0x000066FF,0x00FFCC00,0x0000CC00,0x00009933,0x00FF0000,0x00FF0000,0x00FF0000]"
 waterfall_min_level = -88 #in dB
 waterfall_max_level = -20
 waterfall_auto_level_margin = (5, 40)
@@ -115,10 +115,9 @@ csdr_dynamic_bufsize = False # This allows you to change the buffering mode of c
 csdr_print_bufsizes = False  # This prints the buffer sizes used for csdr processes.
 csdr_through = False # Setting this True will print out how much data is going into the DSP chains.
 
-#Look up external IP address automatically from icanhazip.com, and use it as [server_hostname]
-""""
+
 print "[openwebrx-config] Detecting external IP address..."
 import urllib2
 server_hostname=urllib2.urlopen("http://icanhazip.com").read()[:-1]
 print "[openwebrx-config] External IP address detected:", server_hostname
-"""
+
