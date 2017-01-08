@@ -32,14 +32,14 @@ class dsp_plugin:
 
 	def __init__(self):
 		self.samp_rate = 2400000 #based on WFM csdr
-		self.output_rate = 48000 #based on csdr
+		self.output_rate = 44100 #based on csdr
 		self.fft_size = 1024
 		self.fft_fps = 5
 		self.offset_freq = 0
-		self.low_cut = -18000 #work
-		self.high_cut = 18000 #work
-		self.bpf_transition_bw = 320 #Hz, and this is a constant
-		self.ddc_transition_bw_rate = 0.05 # of the IF sample rate # based on WFM csdr
+		self.low_cut = -80000 #work
+		self.high_cut = 80000 #work best 20000/18000 . 50000 good but invalid
+		self.bpf_transition_bw = 100000 #Hz, and this is a constant , 320 default
+		self.ddc_transition_bw_rate = 1.5 # of the IF sample rate # based on WFM csdr / diatas 2 kualitas jelek, diatas 6 tidak bekerja, ideal 0.05-1.5
 		self.running = False
 		self.audio_compression = "none"
 		self.fft_compression = "none"
@@ -67,13 +67,14 @@ class dsp_plugin:
 				return fft_chain_base+" | csdr compress_fft_adpcm_f_u8 {fft_size}"
 			else:
 				return fft_chain_base
-		chain_begin=any_chain_base+"csdr shift_addition_cc --fifo {shift_pipe} | csdr fir_decimate_cc {decimation} {ddc_transition_bw} HAMMING | csdr bandpass_fir_fft_cc --fifo {bpf_pipe} {bpf_transition_bw} HAMMING | csdr squelch_and_smeter_cc --fifo {squelch_pipe} --outfifo {smeter_pipe} 5 1 | "
-		chain_end = ""
+				
+		if which != "wfm": chain_begin=any_chain_base+"csdr shift_addition_cc --fifo {shift_pipe} | csdr fir_decimate_cc {decimation} {ddc_transition_bw} HAMMING | csdr bandpass_fir_fft_cc --fifo {bpf_pipe} {bpf_transition_bw} HAMMING  | "
+		else: chain_begin=any_chain_base+"csdr shift_addition_cc --fifo {shift_pipe} | csdr fir_decimate_cc $[{decimation}/5] 0.05 HAMMING | "
+		chain_end = "" 
+		
 		if self.audio_compression=="adpcm":
 			chain_end = " | csdr encode_ima_adpcm_i16_u8"
-		if which == "wfm": return chain_begin + "csdr fmdemod_quadri_cf | csdr fractional_decimator_ff {last_decimation} | csdr deemphasis_wfm_ff 48000 50e-6 | csdr convert_f_s16"+chain_end #based on WFM csdr, not sure about shift_addition shift pipe part
-		elif which == "am":	return chain_begin + "csdr amdemod_cf | csdr fastdcblock_ff | csdr fractional_decimator_ff {last_decimation} | csdr agc_ ff | csdr limit_ff | csdr convert_f_s16"+chain_end
-		elif which == "ssb": return chain_begin + "csdr realpart_cf | csdr fractional_decimator_ff {last_decimation} | csdr agc_ff | csdr limit_ff | csdr convert_f_s16"+chain_end
+		if which == "wfm" : return "bash -c \"cat {bpf_pipe} > /dev/null & "+chain_begin+"csdr fmdemod_quadri_cf | csdr fractional_decimator_ff $(python -c 'print {last_decimation}*5*({decimation}./(({decimation}/5)*5))') | csdr deemphasis_wfm_ff 44100 50e-6 | csdr squelch_and_smeter_cc --fifo {squelch_pipe} --outfifo {smeter_pipe} 5 1 | csdr convert_f_s16\""+chain_end
 
 	def set_audio_compression(self,what): #d
 		self.audio_compression = what
@@ -90,7 +91,7 @@ class dsp_plugin:
 		self.samp_rate=samp_rate
 		self.decimation= 1 #based on csdr wfm divided by 10
 		while self.samp_rate/(self.decimation+1)>self.output_rate:
-			self.decimation+= 1
+			self.decimation+= 1 # diganti lainya tidak berjalan
 		self.last_decimation=float(self.if_samp_rate())/self.output_rate #based on csdr wfm 5
 
 	def if_samp_rate(self):
