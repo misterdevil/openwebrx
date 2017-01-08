@@ -320,7 +320,16 @@ h1, h2, p, a, span{
 	.containera {
 		float: left;
 		width: 550px;
+
 	}
+
+	/*.containerb {
+		float: left;
+		width: 100%;*/
+
+	}
+
+
 		.block {
 			margin-bottom: 25px;
 			background: #394264;
